@@ -12,20 +12,16 @@ import (
 )
 
 func Sum256(data []byte) [sha256.Size]byte {
+	var out [sha256.Size]byte
+
 	ctx := new(C.SHA256_CTX)
 	C.SHA256_Init(ctx)
-
-	buf := (*C.uchar)(C.malloc(sha256.Size))
-	defer C.free(unsafe.Pointer(buf))
 
 	if n := len(data); n > 0 {
 		C.SHA256_Update(ctx, unsafe.Pointer(&data[0]), C.size_t(n))
 	}
-	C.SHA256_Final(buf, ctx)
-
-	b := C.GoBytes(unsafe.Pointer(buf), sha256.Size)
-	var out [sha256.Size]byte
-	copy(out[:], b)
+	md := (*C.uchar)(unsafe.Pointer(&out[0]))
+	C.SHA256_Final(md, ctx)
 
 	return out
 }
