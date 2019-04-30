@@ -1,3 +1,5 @@
+#include "server.h"
+
 #include <iostream>
 #include <memory>
 
@@ -152,7 +154,8 @@ void decode(SSL *ssl) /* Serve the connection -- threadable */
   }
 }
 
-int main(int argc, char *argv[])
+//int main(int argc, char *argv[])
+int ListenAndServe()
 {
   // non-zero gid means non-root-user
   // who has no permission for run the server
