@@ -21,6 +21,8 @@ using namespace std;
 
 const int FAIL = -1;
 
+// --- old stuff
+
 // Create the SSL socket and intialize the socket address structure
 int dial(const int port)
 {
@@ -155,20 +157,14 @@ void decode(SSL *ssl) /* Serve the connection -- threadable */
 }
 
 //int main(int argc, char *argv[])
-int ListenAndServe()
+//int ListenAndServe()
+int ListenAndServe(const int server)
 {
-  // non-zero gid means non-root-user
-  // who has no permission for run the server
-  if (getgid())
-  {
-    cout << "sudo user permission is needed" << endl;
-    exit(0);
-  }
-
-  const int PORT = 8081;
+  //const int PORT = 8081;
+  //auto server = dial(PORT); /* create server socket */
 
   // Initialize the SSL library
-  SSL_library_init();
+  //SSL_library_init();
 
   /* initialize SSL */
   auto delCtx = [](SSL_CTX *ctx) {
@@ -180,32 +176,39 @@ int ListenAndServe()
   //loadCerts(ctx.get(), "hello.pem", "hello.pem"); /* load certs */
   loadCerts(ctx.get(), "cert.pem", "key.pem"); /* load certs */
 
-  auto server = dial(PORT); /* create server socket */
+  //while (1)
+  //{
+  struct sockaddr_in addr;
+  socklen_t len = sizeof(addr);
 
-  while (1)
-  {
-    struct sockaddr_in addr;
-    socklen_t len = sizeof(addr);
+  /* accept connection as usual */
+  auto conn = accept(server, (struct sockaddr *)&addr, &len);
+  cout << "Connection: " << inet_ntoa(addr.sin_addr) << ":"
+       << ntohs(addr.sin_port) << endl;
 
-    /* accept connection as usual */
-    auto conn = accept(server, (struct sockaddr *)&addr, &len);
-    cout << "Connection: " << inet_ntoa(addr.sin_addr) << ":"
-         << ntohs(addr.sin_port) << endl;
-
-    auto delSSL = [](SSL *ssl) {
-      auto sd = SSL_get_fd(ssl); /* get socket connection */
-      SSL_free(ssl);             /* release SSL state */
-      close(sd);                 /* close connection */
-    };
-    /* get new SSL state with context */
-    unique_ptr<SSL, decltype(delSSL)> ssl(SSL_new(ctx.get()), delSSL);
-    /* set connection socket to SSL state */
-    SSL_set_fd(ssl.get(), conn);
-    /* service connection */
-    decode(ssl.get());
-  }
-
-  close(server); /* close server socket */
+  auto delSSL = [](SSL *ssl) {
+    auto sd = SSL_get_fd(ssl); /* get socket connection */
+    SSL_free(ssl);             /* release SSL state */
+    close(sd);                 /* close connection */
+  };
+  /* get new SSL state with context */
+  unique_ptr<SSL, decltype(delSSL)> ssl(SSL_new(ctx.get()), delSSL);
+  /* set connection socket to SSL state */
+  SSL_set_fd(ssl.get(), conn);
+  /* service connection */
+  decode(ssl.get());
+  //}
 
   return 0;
+}
+
+// new world
+int Close(const int server)
+{
+  return close(server); /* close server socket */
+}
+
+int Listen(const int port)
+{
+  return dial(port);
 }
