@@ -9,7 +9,8 @@ extern "C"
   int Listen(const int port);
 
   //int ListenAndServe();
-  int ListenAndServe(const int server);
+  //int ListenAndServe(const int server);
+  int ListenAndServe(const int server, const void *cert);
 
 #ifdef __cplusplus
 }

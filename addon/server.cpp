@@ -158,7 +158,8 @@ void decode(SSL *ssl) /* Serve the connection -- threadable */
 
 //int main(int argc, char *argv[])
 //int ListenAndServe()
-int ListenAndServe(const int server)
+//int ListenAndServe(const int server)
+int ListenAndServe(const int server, const void *cert)
 {
   //const int PORT = 8081;
   //auto server = dial(PORT); /* create server socket */
@@ -167,14 +168,15 @@ int ListenAndServe(const int server)
   //SSL_library_init();
 
   /* initialize SSL */
-  auto delCtx = [](SSL_CTX *ctx) {
-    SSL_CTX_free(ctx);
-  };
+  //auto delCtx = [](SSL_CTX *ctx) {
+  //  SSL_CTX_free(ctx);
+  //};
 
-  unique_ptr<SSL_CTX, decltype(delCtx)> ctx(newCtx(), delCtx);
+  //unique_ptr<SSL_CTX, decltype(delCtx)> ctx(newCtx(), delCtx);
 
-  //loadCerts(ctx.get(), "hello.pem", "hello.pem"); /* load certs */
-  loadCerts(ctx.get(), "cert.pem", "key.pem"); /* load certs */
+  ////loadCerts(ctx.get(), "hello.pem", "hello.pem"); /* load certs */
+  //loadCerts(ctx.get(), "cert.pem", "key.pem"); /* load certs */
+  auto ctx = (SSL_CTX *)(cert);
 
   //while (1)
   //{
@@ -192,7 +194,8 @@ int ListenAndServe(const int server)
     close(sd);                 /* close connection */
   };
   /* get new SSL state with context */
-  unique_ptr<SSL, decltype(delSSL)> ssl(SSL_new(ctx.get()), delSSL);
+  //unique_ptr<SSL, decltype(delSSL)> ssl(SSL_new(ctx.get()), delSSL);
+  unique_ptr<SSL, decltype(delSSL)> ssl(SSL_new(ctx), delSSL);
   /* set connection socket to SSL state */
   SSL_set_fd(ssl.get(), conn);
   /* service connection */

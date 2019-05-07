@@ -79,9 +79,12 @@ func Hello() {
 	//defer C.destroyCert((*C.Cert)(response.value))
 	defer C.destroyCert(response.value)
 
-	fmt.Println(response.error)
+	//fmt.Println(response.error)
+	if 0 != response.error {
+		panic(fmt.Errorf("failed to to load cert: %d", response.error))
+	}
 
-	errCode := C.ListenAndServe(ln.socket)
+	errCode := C.ListenAndServe(ln.socket, response.value)
 	fmt.Println(errCode)
 }
 
