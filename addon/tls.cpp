@@ -7,14 +7,10 @@
 
 #include <openssl/err.h>
 
-struct _cert
-{
-  /* data */
-  SSL_CTX *ctx;
-};
+using namespace std;
 
 /** dependencies */
-SSL_CTX *newCtx2()
+SSL_CTX *newCtx()
 {
   auto method = TLS_server_method(); /* create new server-method instance */
   auto ctx = SSL_CTX_new(method);    /* create new context from method */
@@ -56,7 +52,7 @@ Response loadX509KeyPair(const char *certFile, const char *keyFile)
     SSL_CTX_free(ctx);
   };
 
-  std::unique_ptr<SSL_CTX, decltype(delCtx)> ctx(newCtx2(), delCtx);
+  std::unique_ptr<SSL_CTX, decltype(delCtx)> ctx(newCtx(), delCtx);
 
   /* set the local certificate from CertFile */
   if (SSL_CTX_use_certificate_file(ctx.get(), certFile, SSL_FILETYPE_PEM) <= 0)

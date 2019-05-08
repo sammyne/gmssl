@@ -5,12 +5,13 @@ extern "C"
 {
 #endif
 
+  int Accept(const int server, const void *cert);
   int Close(const int server);
   int Listen(const int port);
 
   //int ListenAndServe();
   //int ListenAndServe(const int server);
-  int ListenAndServe(const int server, const void *cert);
+  //int ListenAndServe(const int server, const void *cert);
 
 #ifdef __cplusplus
 }

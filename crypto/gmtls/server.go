@@ -19,10 +19,14 @@ import (
 type Listener struct {
 	socket C.int
 	addr   *net.TCPAddr
+	cert   Certificate
 }
 
 func (ln *Listener) Accept() (net.Conn, error) {
-	panic("not implemented")
+	err := C.Accept(ln.socket, ln.cert)
+	fmt.Println(err)
+
+	return nil, errors.New("not implemented")
 }
 
 func (ln *Listener) Close() error {
@@ -39,45 +43,22 @@ func (ln *Listener) Addr() net.Addr {
 	return ln.addr
 }
 
-func Listen(port int) (*Listener, error) {
+func Listen(port int, config *Config) (*Listener, error) {
 	socket := C.Listen(C.int(port))
 	if socket < 0 {
 		return nil, errors.New("failed to bootstrap listener")
 	}
 
-	fmt.Println("hello")
 	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", port))
 	if nil != err {
 		return nil, err
 	}
 
-	return &Listener{socket, addr}, nil
-}
-
-func Hello() {
-	/*
-		ln := C.Listen(8081)
-		if ln < 0 {
-			panic("failed to listen")
-		}
-	*/
-	ln, err := Listen(8081)
-	if nil != err {
-		panic(err)
+	if nil == config || 0 == len(config.Certificates) {
+		return nil, errors.New("missing certificates")
 	}
-	//defer C.Close(ln.Socket())
-	defer ln.Close()
 
-	fmt.Println(ln.Addr())
-
-	cert, err := LoadX509KeyPair("./cert.pem", "./key.pem")
-	if nil != err {
-		panic(err)
-	}
-	defer UnloadX509KeyPair(cert)
-
-	errCode := C.ListenAndServe(ln.socket, cert)
-	fmt.Println(errCode)
+	return &Listener{socket, addr, config.Certificates[0]}, nil
 }
 
 func init() {

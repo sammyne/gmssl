@@ -11,10 +11,6 @@ extern "C"
     int error;
   } Response;
 
-  struct _cert;
-  typedef struct _cert Cert;
-
-  //void destroyCert(const Cert *cert);
   void destroyCert(const void *cert);
 
   // initTLS initializes the SSL library
