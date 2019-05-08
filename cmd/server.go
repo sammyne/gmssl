@@ -30,6 +30,8 @@ func main() {
 	}
 	defer conn.Close()
 
+	fmt.Println("incoming from:", conn.RemoteAddr())
+
 	var buf [1024]byte
 	n, err := conn.Read(buf[:])
 	if nil != err {

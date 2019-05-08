@@ -20,7 +20,8 @@ import (
 )
 
 type Conn struct {
-	ssl unsafe.Pointer
+	ssl    unsafe.Pointer
+	remote *net.TCPAddr
 }
 
 func (conn *Conn) Read(b []byte) (int, error) {
@@ -56,7 +57,7 @@ func (conn *Conn) LocalAddr() net.Addr {
 }
 
 func (conn *Conn) RemoteAddr() net.Addr {
-	panic("not implemented")
+	return conn.remote
 }
 
 func (conn *Conn) SetDeadline(t time.Time) error {
@@ -69,4 +70,18 @@ func (conn *Conn) SetReadDeadline(t time.Time) error {
 
 func (conn *Conn) SetWriteDeadline(t time.Time) error {
 	panic("not implemented")
+}
+
+func newConn(cconn unsafe.Pointer) (*Conn, error) {
+	conn := (*C.Conn)(cconn)
+
+	ip := conn.remoteIP
+	addr := fmt.Sprintf("%d.%d.%d.%d:%d", ip&0xff, ((ip >> 8) & 0xff),
+		((ip >> 16) & 0xff), ((ip >> 24) & 0xff), conn.remotePort)
+	remote, err := net.ResolveTCPAddr("tcp", addr)
+	if nil != err {
+		return nil, err
+	}
+
+	return &Conn{ssl: conn.ssl, remote: remote}, nil
 }

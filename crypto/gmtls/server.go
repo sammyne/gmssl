@@ -25,23 +25,11 @@ type Listener struct {
 
 func (ln *Listener) Accept() (net.Conn, error) {
 	response := C.Accept(ln.socket, ln.cert)
-	//fmt.Println(err)
 	if 0 != response.error {
-		fmt.Println(response.error)
 		return nil, fmt.Errorf("failed to accept: %d", response.error)
 	}
-	//defer C.Disconnect(response.value)
 
-	conn := (*C.Conn)(response.value)
-
-	C.Hello(response.value)
-
-	//var buf [1024]byte
-
-	//err := C.Read(conn, (*C.char)(unsafe.Pointer(&buf[0])), C.int(len(buf)))
-	//fmt.Println("hello", err)
-
-	return &Conn{ssl: conn.ssl}, nil
+	return newConn(response.value)
 }
 
 func (ln *Listener) Close() error {
