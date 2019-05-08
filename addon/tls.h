@@ -5,11 +5,7 @@ extern "C"
 {
 #endif
 
-  typedef struct
-  {
-    void *value;
-    int error;
-  } Response;
+#include "types.h"
 
   void destroyCert(const void *cert);
 

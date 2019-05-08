@@ -9,6 +9,7 @@ package gmtls
 // #include <stdlib.h>
 // #include "server.h"
 // #include "tls.h"
+// #include "types.h"
 import "C"
 import (
 	"errors"
@@ -23,10 +24,24 @@ type Listener struct {
 }
 
 func (ln *Listener) Accept() (net.Conn, error) {
-	err := C.Accept(ln.socket, ln.cert)
-	fmt.Println(err)
+	response := C.Accept(ln.socket, ln.cert)
+	//fmt.Println(err)
+	if 0 != response.error {
+		fmt.Println(response.error)
+		return nil, fmt.Errorf("failed to accept: %d", response.error)
+	}
+	//defer C.Disconnect(response.value)
 
-	return nil, errors.New("not implemented")
+	conn := (*C.Conn)(response.value)
+
+	C.Hello(response.value)
+
+	//var buf [1024]byte
+
+	//err := C.Read(conn, (*C.char)(unsafe.Pointer(&buf[0])), C.int(len(buf)))
+	//fmt.Println("hello", err)
+
+	return &Conn{ssl: conn.ssl}, nil
 }
 
 func (ln *Listener) Close() error {

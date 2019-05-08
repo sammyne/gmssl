@@ -19,8 +19,6 @@
 
 using namespace std;
 
-const int FAIL = -1;
-
 // --- old stuff
 void showCert(const SSL *ssl)
 {
@@ -51,69 +49,42 @@ void showCert(const SSL *ssl)
 
   //X509_free(cert);
 }
-
-void decode(SSL *ssl) /* Serve the connection -- threadable */
-{
-  const string response = "hello world";
-  const string EXPECT_TOKEN = "I'm sammy";
-
-  if (SSL_accept(ssl) == FAIL) /* do SSL-protocol accept */
-  {
-    ERR_print_errors_fp(stderr);
-    return;
-  }
-
-  /* get any certificates */
-  showCert(ssl);
-
-  char req[1024] = {0};
-  auto ell = SSL_read(ssl, req, sizeof(req)); /* get request */
-  req[ell] = '\0';
-
-  cout << "request msg: " << req << endl;
-
-  if (ell > 0)
-  {
-    string reply = (strcmp(EXPECT_TOKEN.c_str(), req) == 0 ? response : "invalid msg");
-
-    SSL_write(ssl, reply.c_str(), reply.size());
-  }
-  else
-  {
-    ERR_print_errors_fp(stderr);
-  }
-}
-
 // new world
 
-int Accept(const int server, const void *cert)
+//int Accept(const int server, const void *cert)
+Response Accept(const int server, const void *cert)
 {
   auto ctx = (SSL_CTX *)(cert);
 
-  //while (1)
-  //{
+  auto conn = new Conn;
+
   struct sockaddr_in addr;
   socklen_t len = sizeof(addr);
 
   /* accept connection as usual */
-  auto conn = accept(server, (struct sockaddr *)&addr, &len);
-  cout << "Connection: " << inet_ntoa(addr.sin_addr) << ":"
-       << ntohs(addr.sin_port) << endl;
+  auto socket = accept(server, (struct sockaddr *)&addr, &len);
+  conn->remoteIP = addr.sin_addr.s_addr;
+  conn->remotePort = ntohs(addr.sin_port);
 
-  auto delSSL = [](SSL *ssl) {
-    auto sd = SSL_get_fd(ssl); /* get socket connection */
-    SSL_free(ssl);             /* release SSL state */
-    close(sd);                 /* close connection */
-  };
+  //auto delSSL = Disconnect;
   /* get new SSL state with context */
-  //unique_ptr<SSL, decltype(delSSL)> ssl(SSL_new(ctx.get()), delSSL);
-  unique_ptr<SSL, decltype(delSSL)> ssl(SSL_new(ctx), delSSL);
-  /* set connection socket to SSL state */
-  SSL_set_fd(ssl.get(), conn);
-  /* service connection */
-  decode(ssl.get());
 
-  return 0;
+  //unique_ptr<SSL, decltype(delSSL)> ssl(SSL_new(ctx), delSSL);
+  auto ssl = SSL_new(ctx);
+  /* set connection socket to SSL state */
+  //SSL_set_fd(ssl.get(), conn);
+  SSL_set_fd(ssl, socket);
+  /* service connection */
+  //if (SSL_accept(ssl.get()) == FAIL) /* do SSL-protocol accept */
+  if (-1 == SSL_accept(ssl)) /* do SSL-protocol accept */
+  {
+    //ERR_print_errors_fp(stderr);
+    return {nullptr, 1};
+  }
+
+  conn->ssl = ssl;
+
+  return {conn, 0};
 }
 
 int Close(const int server)
@@ -145,4 +116,30 @@ int Listen(const int port)
   }
 
   return sd;
+}
+
+int Read(const void *ssl, char *buf, const int bufLen)
+{
+  auto _ssl = (SSL *)(ssl);
+  if (!_ssl)
+  {
+    return -2;
+  }
+
+  //decode(_ssl);
+  //return 0;
+
+  // read out request message
+  return SSL_read(_ssl, buf, bufLen); /* get request */
+}
+
+int Write(const void *ssl, const char *msg, const int msgLen)
+{
+  auto _ssl = (SSL *)(ssl);
+  if (!_ssl)
+  {
+    return -2;
+  }
+
+  return SSL_write(_ssl, msg, msgLen);
 }

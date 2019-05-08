@@ -24,5 +24,24 @@ func main() {
 
 	fmt.Println(ln.Addr())
 
-	ln.Accept()
+	conn, err := ln.Accept()
+	if nil != err {
+		panic(err)
+	}
+	defer conn.Close()
+
+	var buf [1024]byte
+	n, err := conn.Read(buf[:])
+	if nil != err {
+		panic(err)
+	}
+
+	fmt.Printf("req: %s\n", buf[:(n+1)])
+
+	msg := []byte("hello world")
+	n, err = conn.Write(msg)
+	if nil != err {
+		panic(err)
+	}
+	fmt.Printf("totally %d bytes is sent\n", n)
 }
