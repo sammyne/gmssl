@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"unsafe"
 )
 
 type Listener struct {
@@ -71,20 +70,13 @@ func Hello() {
 
 	fmt.Println(ln.Addr())
 
-	certFile, keyFile := C.CString("./cert.pem"), C.CString("./key.pem")
-	defer C.free(unsafe.Pointer(keyFile))
-	defer C.free(unsafe.Pointer(certFile))
-
-	response := C.loadX509KeyPair(certFile, keyFile)
-	//defer C.destroyCert((*C.Cert)(response.value))
-	defer C.destroyCert(response.value)
-
-	//fmt.Println(response.error)
-	if 0 != response.error {
-		panic(fmt.Errorf("failed to to load cert: %d", response.error))
+	cert, err := LoadX509KeyPair("./cert.pem", "./key.pem")
+	if nil != err {
+		panic(err)
 	}
+	defer UnloadX509KeyPair(cert)
 
-	errCode := C.ListenAndServe(ln.socket, response.value)
+	errCode := C.ListenAndServe(ln.socket, cert)
 	fmt.Println(errCode)
 }
 
